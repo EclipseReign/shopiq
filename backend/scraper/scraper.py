@@ -7,7 +7,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 import psycopg2
 from psycopg2 import extras
@@ -28,6 +27,7 @@ def get_db_connection():
 def ensure_tables_exist():
     conn = get_db_connection()
     with conn.cursor() as cur:
+        # Таблица категорий
         cur.execute("""
             CREATE TABLE IF NOT EXISTS categories (
                 id SERIAL PRIMARY KEY,
@@ -37,10 +37,11 @@ def ensure_tables_exist():
                 level INTEGER NOT NULL
             )
         """)
+        # Таблица товаров (используем category_id как внешний ключ)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS products (
                 id SERIAL PRIMARY KEY,
-                category TEXT,
+                category_id INTEGER REFERENCES categories(id),
                 name TEXT,
                 price TEXT,
                 parsed_price NUMERIC,
@@ -78,7 +79,7 @@ def parse_category_file(content):
         line = line.strip()
         if line.startswith("Все категории:"):
             continue
-        # Извлекаем имя и url
+        # Извлекаем имя и URL, если указаны
         name, url = None, None
         if "Category:" in line:
             match = re.match(r"Category: (.*?) \((.*?)\)", line)
@@ -173,8 +174,11 @@ def scrape_category(category_id, url):
         )
         hide_location_dialog(driver)
         products = []
+        page = 1
         while True:
+            print(f"Обрабатываем страницу {page} для категории id {category_id}", flush=True)
             product_cards = driver.find_elements(By.CSS_SELECTOR, ".item-card")
+            print(f"Найдено карточек товаров: {len(product_cards)}", flush=True)
             for card in product_cards:
                 try:
                     name = card.find_element(By.CSS_SELECTOR, ".item-card__name").text
@@ -207,9 +211,15 @@ def scrape_category(category_id, url):
             try:
                 next_btn = driver.find_element(By.XPATH, 
                     '//li[contains(@class, "pagination__el") and contains(., "Следующая")]')
+                # Проверяем, если кнопка не активна (например, имеет класс "disabled"), то останавливаем цикл
+                if "disabled" in (next_btn.get_attribute("class") or "").lower():
+                    print("Достигнута последняя страница.", flush=True)
+                    break
                 driver.execute_script("arguments[0].scrollIntoView(true);", next_btn)
                 time.sleep(1)
+                hide_location_dialog(driver)
                 driver.execute_script("arguments[0].click();", next_btn)
+                page += 1
                 time.sleep(2)
             except Exception as e:
                 print(f"Нет кнопки 'Следующая' или ошибка: {e}", flush=True)
@@ -245,14 +255,13 @@ def main():
         save_categories(categories)
     else:
         print("Категории уже сохранены, пропускаем парсинг категорий.", flush=True)
-
     conn = get_db_connection()
     with conn.cursor() as cur:
         cur.execute("SELECT id, url FROM categories WHERE url IS NOT NULL")
         categories_to_scrape = cur.fetchall()
     conn.close()
     print(f"Найдено категорий для скрапинга товаров: {len(categories_to_scrape)}", flush=True)
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    with ThreadPoolExecutor(max_workers=100) as executor:
         for cat_id, url in categories_to_scrape:
             executor.submit(scrape_category, cat_id, url)
 

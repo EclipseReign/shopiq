@@ -1,3 +1,4 @@
+// models/db.js
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -22,9 +23,25 @@ pool.query(`
   );
 `, (err, res) => {
   if (err) {
-    console.error('Error creating table:', err);
+    console.error('Error creating products table:', err);
   } else {
     console.log("Products table ready");
+  }
+});
+
+pool.query(`
+  CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT,
+    parent_id INTEGER REFERENCES categories(id),
+    level INTEGER NOT NULL
+  );
+`, (err, res) => {
+  if (err) {
+    console.error('Error creating categories table:', err);
+  } else {
+    console.log("Categories table ready");
   }
 });
 

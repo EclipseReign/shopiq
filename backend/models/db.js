@@ -5,7 +5,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
-
+pool.query('CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);');
+pool.query('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);');
 pool.query(`
   CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,

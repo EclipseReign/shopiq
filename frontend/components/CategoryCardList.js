@@ -1,4 +1,3 @@
-// components/CategoryCardList.js
 import Link from 'next/link';
 
 export default function CategoryCardList({ categories }) {
@@ -7,10 +6,9 @@ export default function CategoryCardList({ categories }) {
       <table className="min-w-full table-auto">
         <thead className="bg-gray-100">
           <tr>
-            <th className="px-4 py-2">Название</th>
-            <th className="px-4 py-2">Товаров</th>
-            <th className="px-4 py-2">Выручка</th>
-            <th className="px-4 py-2">Статус</th>
+            <th className="px-4 py-2 text-left">Название</th>
+            <th className="px-4 py-2 text-right">Продажи</th>
+            <th className="px-4 py-2 text-right">Выручка</th>
           </tr>
         </thead>
         <tbody>
@@ -21,10 +19,11 @@ export default function CategoryCardList({ categories }) {
                   <a className="text-blue-600 underline">{cat.name}</a>
                 </Link>
               </td>
-              <td className="px-4 py-2">{cat.products_count || 0}</td>
-              <td className="px-4 py-2">{(cat.revenue || 0).toLocaleString()} ₸</td>
-              <td className="px-4 py-2">
-                {renderStatusDot(cat.status)}
+              <td className="px-4 py-2 text-right">
+                {cat.sales.toLocaleString()}
+              </td>
+              <td className="px-4 py-2 text-right">
+                {cat.revenue.toLocaleString()} ₸
               </td>
             </tr>
           ))}
@@ -32,18 +31,4 @@ export default function CategoryCardList({ categories }) {
       </table>
     </div>
   );
-}
-
-function renderStatusDot(status) {
-  // Например, "open" / "restricted" / "closed" / "empty"
-  switch (status) {
-    case 'open':
-      return <span className="text-green-600">●</span>;
-    case 'restricted':
-      return <span className="text-yellow-600">●</span>;
-    case 'closed':
-      return <span className="text-red-600">●</span>;
-    default:
-      return <span className="text-blue-600">●</span>;
-  }
 }

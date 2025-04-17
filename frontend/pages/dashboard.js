@@ -5,70 +5,81 @@ import ProductTable from "../components/ProductTable";
 import CategoryTree from "../components/CategoryTree";
 
 export default function Dashboard() {
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Фильтры: выбранная категория, порядок сортировки и поисковый запрос.
-  const [selectedCategory, setSelectedCategory] = useState("Все");
+  const [loadingCats, setLoadingCats] = useState(true);
+  const [loadingProds, setLoadingProds] = useState(true);
   const [sort, setSort] = useState("default");
   const [search, setSearch] = useState("");
 
+  // 1) Подгрузка списка корневых категорий
   useEffect(() => {
-    const fetchProducts = async () => {
+    (async () => {
+      setLoadingCats(true);
       try {
-        setLoading(true);
-        const params = new URLSearchParams({
-          category: selectedCategory,
-          sort: sort,
-          search: search,
-        });
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/categories`
+        );
+        const data = await res.json();
+        setCategories(data.categories || []);
+      } catch (err) {
+        console.error("Ошибка загрузки категорий:", err);
+        setCategories([]);
+      } finally {
+        setLoadingCats(false);
+      }
+    })();
+  }, []);
+
+  // 2) Подгрузка товаров при смене фильтров
+  useEffect(() => {
+    (async () => {
+      setLoadingProds(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategoryId) params.append("categoryId", selectedCategoryId);
+        if (sort)                 params.append("sort", sort);
+        if (search)               params.append("search", search);
+
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/products?${params.toString()}`
         );
         const data = await res.json();
-        // Проверка на наличие поля products
-        if (Array.isArray(data.products)) {
-          setProducts(data.products);
-        } else {
-          console.error("Не удалось загрузить товары. Ожидался массив 'products'.");
-          setProducts([]); // Устанавливаем пустой массив в случае ошибки
-        }
-      } catch (error) {
-        console.error("Ошибка загрузки товаров:", error);
-        setProducts([]); // Устанавливаем пустой массив в случае ошибки
+        setProducts(Array.isArray(data.products) ? data.products : []);
+      } catch (err) {
+        console.error("Ошибка загрузки товаров:", err);
+        setProducts([]);
       } finally {
-        setLoading(false);
+        setLoadingProds(false);
       }
-    };
-  
-    fetchProducts();
-  }, [selectedCategory, sort, search]);
-
-  // Обработчик выбора категории из дерева категорий
-  const handleCategorySelect = (categoryName) => {
-    setSelectedCategory(categoryName);
-  };
-
-  // Обработчик фильтрации/сортировки и поиска из компонента FilterSort
-  const handleFilterSort = (category, sortOption, searchTerm) => {
-    // Если фильтрация идёт через дерево категорий, можно не изменять выбранную категорию здесь,
-    // либо задать значение по умолчанию.
-    setSort(sortOption);
-    setSearch(searchTerm);
-  };
+    })();
+  }, [selectedCategoryId, sort, search]);
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/4">
-          <CategoryTree onSelectCategory={handleCategorySelect} />
+          {loadingCats ? (
+            <p>Загрузка категорий...</p>
+          ) : (
+            <CategoryTree
+              categories={categories}
+              onSelectCategory={setSelectedCategoryId}
+            />
+          )}
         </div>
+
         <div className="md:w-3/4">
-          <FilterSort onFilterSort={handleFilterSort} />
-          {loading ? (
+          <FilterSort onFilterSort={(_, sortOption, searchTerm) => {
+            setSort(sortOption);
+            setSearch(searchTerm);
+          }} />
+
+          {loadingProds ? (
             <div className="text-center py-12">
               <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-              <p className="mt-4 text-gray-600">Загрузка данных...</p>
+              <p className="mt-4 text-gray-600">Загрузка товаров...</p>
             </div>
           ) : (
             <ProductTable products={products} />

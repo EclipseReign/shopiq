@@ -1,5 +1,5 @@
 Все категории:
-Телефоны и гаджеты:
+Телефоны и гаджеты (/shop/c/smartphones%20and%20gadgets/):
   Category: Аксессуары для телефонов (/shop/c/phone%20accessories/)
     -> Subcategory: Чехлы для смартфонов (/shop/c/phone%20cases/)
     -> Subcategory: Защитные пленки и стекла для смартфонов (/shop/c/smartphones%20screen%20protection/)
@@ -33,7 +33,7 @@
   Category: Мобильные телефоны (/shop/c/mobiles/)
   Category: Радиотелефоны (/shop/c/cordless%20telephones/)
   Category: Спутниковые телефоны и коммуникаторы (/shop/c/satellite%20phones%20and%20communicators/)
-Бытовая техника:
+Бытовая техника (/shop/c/home%20equipment/):
   Category: Мелкая техника для кухни (/shop/c/kitchen%20appliances/)
     -> Subcategory: Миксеры, блендеры и измельчители (/shop/c/mixers%20blenders%20and%20choppers/)
     -> Subcategory: Электрочайники и термопоты (/shop/c/kettles/)
@@ -92,7 +92,7 @@
     -> Subcategory: Паровые шкафы (/shop/c/steam%20clothing%20care%20system/)
   Category: Торговые автоматы (/shop/c/vending%20machines/)
     -> Subcategory: Снековые автоматы (/shop/c/snack%20machines/)
-ТВ, Аудио, Видео:
+ТВ, Аудио, Видео (/shop/c/tv_audio/):
   Category: Наушники и гарнитуры (/shop/c/headphones/)
   Category: Аудиотехника (/shop/c/audio/)
     -> Subcategory: Портативные колонки (/shop/c/portable%20speakers/)
@@ -188,7 +188,7 @@
   Category: Сценическое оборудование (/shop/c/stage%20equipment/)
     -> Subcategory: Спецэффекты и шоу-техника (/shop/c/special%20effects%20and%20show%20technique/)
     -> Subcategory: Световое оборудование (/shop/c/lighting%20equipment/)
-Компьютеры:
+Компьютеры (/shop/c/computers/):
   Category: Периферия (/shop/c/peripherals/)
     -> Subcategory: Мыши (/shop/c/mice/)
     -> Subcategory: Клавиатуры (/shop/c/keyboards/)
@@ -324,7 +324,7 @@
     -> Subcategory: Аналоговые телефонные адаптеры (c/analog%20telephone%20adapters/)
     -> Subcategory: Автоматические телефонные станции (c/automatic%20telephone%20exchanges/)
     -> Subcategory: Межсетевые шлюзы (c/gateways/)
-Мебель:
+Мебель (/shop/c/furniture/):
   Category: Спальня (/shop/c/bedroom/)
     -> Subcategory: Шкафы (/shop/c/wardrobes/)
     -> Subcategory: Кровати (/shop/c/beds/)
@@ -408,7 +408,7 @@
     -> Subcategory: Паллеты, Поддоны (shop/c/pallets/)
     -> Subcategory: Торговые панели-сетки (/shop/c/panels%20mesh/)
     -> Subcategory: Стойки перфорированные (/shop/c/rack%20perforated/)
-Красота, здоровье:
+Красота, здоровье (/shop/c/beauty%20care/):
   Category: Уход за лицом (/shop/c/skin%20care/)
     -> Subcategory: Кремы и сыворотки (/shop/c/creams/)
     -> Subcategory: Средства для умывания и очищения (/shop/c/makeup%20removers/)
@@ -541,7 +541,7 @@
   Category: Мебель и оборудование для салонов красоты (/shop/c/beauty%20salon%20equipment/)
     -> Subcategory: Парикмахерское оборудование (/shop/c/salon%20chairs%20and%20stools/)
     -> Subcategory: Массажные столы (/shop/c/massage%20tables/)
-Детские товары:
+Детские товары (/shop/c/child%20goods/):
   Category: Игрушки (/shop/c/toys/)
     -> Subcategory: Развивающие игрушки (/shop/c/educational%20toys/)
     -> Subcategory: Мягкие игрушки (/shop/c/stuffed%20toys/)
@@ -592,7 +592,7 @@
     -> Subcategory: Надувные игрушки (/shop/c/inflatable%20toys/)
     -> Subcategory: Детские песочницы и горки (/shop/c/kids%20sandboxes/)
     -> Subcategory: Надувные комплексы и батуты (/shop/c/inflatable%20bouncers/)
-Аптека:
+Аптека (/shop/c/pharmacy/):
   Category: Лекарства (/shop/c/medications/)
     -> Subcategory: Простуда, грипп (/shop/c/cold%20and%20flu/)
     -> Subcategory: Желудок, кишечник, печень (/shop/c/stomach%20intestines%20liver/)
@@ -715,7 +715,7 @@
     -> Subcategory: Тест-полоски для глюкометров (/shop/c/accessories%20for%20blood%20glucose%20monitors/)
     -> Subcategory: Гинекологические тесты (/shop/c/gynecological%20tests/)
     -> Subcategory: Экспресс-тесты (/shop/c/rapid%20tests%20for%20covid-19/)
-Строительство, ремонт:
+Строительство, ремонт (/shop/c/construction%20and%20repair/):
   Category: Инструменты (/shop/c/power%20tools/)
     -> Subcategory: Ручные инструменты (/shop/c/hand%20tools/)
     -> Subcategory: Электроинструменты (/shop/c/electrical%20tools/)
@@ -898,7 +898,7 @@
     -> Subcategory: Секционные гаражные ворота (/shop/c/sectional%20garage%20doors/)
     -> Subcategory: Ограждения для парковки (/shop/c/parking%20guards/)
     -> Subcategory: Ограждения (/shop/c/fences/)
-Спорт,туризм:
+Спорт,туризм (/shop/c/sports%20and%20outdoors/):
   Category: Туризм и отдых на природе (/shop/c/camping%20and%20hiking/)
     -> Subcategory: Кемпинг (/shop/c/camping/)
     -> Subcategory: Термосы и термокружки (/shop/c/thermoses%20and%20travel%20mugs/)
@@ -1215,7 +1215,7 @@
   Category: Легкая атлетика (/shop/c/track%20and%20field/)
     -> Subcategory: Дополнительный инвентарь для легкой атлетики (/shop/c/track%20and%20field%20additional%20inventory/)
     -> Subcategory: Стартовые колодки для легкой атлетики (/shop/c/track%20and%20field%20starting%20pads/)
-Досуг, книги:
+Досуг, книги (/shop/c/leisure/):
   Category: Хобби и творчество (/shop/c/hobbies%20and%20crafts/)
     -> Subcategory: Товары для рисования (/shop/c/painting%20goods/)
     -> Subcategory: Товары для рукоделия (/shop/c/crafting%20goods/)
@@ -1281,7 +1281,7 @@
     -> Subcategory: Аксессуары для микроскопов (/shop/c/accessories%20for%20microscopes/)
     -> Subcategory: Аксессуары для телескопов (/shop/c/telescope%20accessories/)
     -> Subcategory: Монтировки для телескопов (/shop/c/telescope%20mounts/)
-Автотовары:
+Автотовары (/shop/c/car%20goods/):
   Category: Автозапчасти (/shop/c/replacement%20parts/)
     -> Subcategory: Кузовные детали (/shop/c/car%20body%20parts/)
     -> Subcategory: Элементы двигателя (/shop/c/engines%20and%20engine%20parts/)
@@ -1466,7 +1466,7 @@
   Category: ГБО (/shop/c/gbo/)
     -> Subcategory: Комплектующие ГБО (/shop/c/gbo%20components/)
     -> Subcategory: Комплекты ГБО (/shop/c/gbo%20kits/)
-Украшения:
+Украшения (/shop/c/jewelry%20and%20bijouterie/):
   Category: Бижутерия (/shop/c/imitation%20jewelry/)
     -> Subcategory: Серьги бижутерные (/shop/c/imitation%20earrings/)
     -> Subcategory: Цепи и бусы бижутерные (/shop/c/imitation%20necklaces/)
@@ -1483,7 +1483,7 @@
     -> Subcategory: Ювелирные весы (/shop/c/jewelry%20scales/)
     -> Subcategory: Фурнитура для украшений (/shop/c/accessories%20for%20jewelry/)
     -> Subcategory: Средства для чистки ювелирных изделий (/shop/c/jewelry%20cleaners/)
-Аксессуары:
+Аксессуары (/shop/c/fashion%20accessories/):
   Category: Сумки, чемоданы, кошельки (/shop/c/travel%20gear/)
     -> Subcategory: Сумки и рюкзаки (/shop/c/fashion%20handbags/)
     -> Subcategory: Дорожные сумки (/shop/c/travel%20duffels/)
@@ -1519,7 +1519,7 @@
     -> Subcategory: Аксессуары для спецодежды (/shop/c/workwear%20accessories/)
     -> Subcategory: Подтяжки (/shop/c/fashion%20suspenders/)
   Category: Свадебные аксессуары (/shop/c/clothing%20accessories/    /shop/c/fashion%20glasses%20and%20accessories/      /shop/c/fashion%20accessory%20sets/ /shop/c/wedding%20accessories/)
-Одежда:
+Одежда (/shop/c/fashion/):
   Category: Женщинам (/shop/c/women%20fashion/)
     -> Subcategory: Женское нижнее белье (/shop/c/women%20underwear/)
     -> Subcategory: Женские футболки и лонгсливы (/shop/c/women%20t-shirts/)
@@ -1611,7 +1611,7 @@
     -> Subcategory: Ползунки (/shop/c/footie%20pants/)
     -> Subcategory: Купальники и плавки для малышей (/shop/c/baby%20swimwear/)
     -> Subcategory: Рубашки и блузки для малышей (/shop/c/baby%20shirts%20and%20blouses/)
-Обувь:
+Обувь (/shop/c/shoes/):
   Category: Женская обувь (/shop/c/women%20shoes/)
     -> Subcategory: Женские кроссовки и кеды (/shop/c/women%20trainers/)
     -> Subcategory: Женские туфли (/shop/c/women%20dress%20shoes/)
@@ -1669,7 +1669,7 @@
     -> Subcategory: Танцевальная обувь для мальчиков (/shop/c/boy%20dance%20shoes/)
     -> Subcategory: Слипоны для мальчиков (/shop/c/boy%20slip-ons/)
     -> Subcategory: Треккинговая обувь для мальчиков (/shop/c/boy%20hiking%20shoes/)
-Товары для дома и дачи:
+Товары для дома и дачи (/shop/c/home/):
   Category: Хозяйственные товары (/shop/c/household%20goods/)
     -> Subcategory: Бытовая химия (/shop/c/household%20chemicals/)
     -> Subcategory: Бумажная продукция для дома (/shop/c/home%20paper%20products/)
@@ -1774,7 +1774,7 @@
     -> Subcategory: Датчики для умного дома (/shop/c/smart%20home%20sensors/)
     -> Subcategory: Шлюзы умного дома (/shop/c/smart%20home%20gateways/)
     -> Subcategory: Комплекты умного дома (/shop/c/smart%20home%20kits/)
-Товары для животных:
+Товары для животных (/shop/c/pet%20goods/):
   Category: Для кошек (/shop/c/cat%20goods/)
     -> Subcategory: Влажные корма для кошек (/shop/c/wet%20cat%20food/)
     -> Subcategory: Сухие корма для кошек (/shop/c/dry%20cat%20food/)
@@ -1861,7 +1861,7 @@
   Category: Для рыб и рептилий (/shop/c/fish%20and%20reptiles%20goods/)
     -> Subcategory: Корма для рыб и рептилий (/shop/c/fish%20and%20reptile%20food/)
     -> Subcategory: Кормушки для рыб и рептилий (/shop/c/fish%20feeders/)
-Подарки, товары для праздников:
+Подарки, товары для праздников (/shop/c/gifts%20and%20party%20supplies/):
   Category: Украшения для праздников (/shop/c/holiday%20decorations/)
     -> Subcategory: Воздушные шары (/shop/c/party%20balloons/)
     -> Subcategory: Украшения для коктейлей (/shop/c/cocktail%20decorations/)
@@ -1918,7 +1918,7 @@
     -> Subcategory: Сувенирные деньги (/shop/c/souvenir%20money/)
     -> Subcategory: Сувениры (/shop/c/stone%20souvenirs/)
     -> Subcategory: Магниты сувенирные (/shop/c/souvenir%20magnets/)
-Канцелярские товары:
+Канцелярские товары (/shop/c/office%20and%20school%20supplies/):
   Category: Бумага и бумажная продукция (/shop/c/paper%20products/)
     -> Subcategory: Ежедневники и блокноты (/shop/c/paper%20notebooks/)
     -> Subcategory: Тетради (/shop/c/exercise%20notebooks/)

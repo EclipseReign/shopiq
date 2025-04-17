@@ -26,3 +26,13 @@ button:hover {
 img {
   max-width: 50px;
 }
+/* frontend/styles/globals.css */
+
+.transition-\[max-height\] {
+  transition-property: max-height;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+

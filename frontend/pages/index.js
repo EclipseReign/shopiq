@@ -20,13 +20,6 @@ export default function Home() {
               {dateRange.start} - {dateRange.end}
             </span>
           </div>
-          {/* Иконки легенды */}
-          <div className="flex space-x-3 text-sm text-gray-500 items-center">
-            <div><span className="text-green-600">●</span> открытая категория</div>
-            <div><span className="text-yellow-600">●</span> ограниченная категория</div>
-            <div><span className="text-red-600">●</span> закрытая категория</div>
-            <div><span className="text-blue-600">●</span> пустая категория</div>
-          </div>
         </div>
 
         {/* Список категорий */}

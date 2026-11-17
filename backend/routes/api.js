@@ -1,15 +1,24 @@
-// routes/api.js
-const express = require('express');
+const express = require("express");
+const catalog = require("../services/catalog");
+const scraper = require("../services/scraper");
+const category = require("../controllers/categoryController");
+const products = require("../controllers/scraperController");
 const router = express.Router();
-const scraperController = require('../controllers/scraperController');
-const categoryController = require('../controllers/categoryController');
-
-// Эндпоинты для товаров
-router.get('/products', scraperController.getProducts);
-router.post('/scrape', scraperController.triggerScraping);
-
-// Эндпоинты для категорий
-router.get('/categories', categoryController.getCategories);
-router.get('/categories/:id', categoryController.getCategoryById);
-
+router.get("/health", async (req, res) => {
+  await require("../models/db").query("SELECT 1");
+  res.json({ status: "ok" });
+});
+router.get("/overview", async (req, res) =>
+  res.json(await catalog.getOverview(req.query)),
+);
+router.get("/products", products.getProducts);
+router.get("/categories", category.getCategories);
+router.get("/categories/:id", category.getCategoryById);
+router.get("/scrape/status", async (req, res) =>
+  res.json(await scraper.status()),
+);
+router.post("/scrape", scraper.authorize, products.triggerScraping);
+router.post("/scrape/cancel", scraper.authorize, async (req, res) =>
+  res.json(await scraper.cancel()),
+);
 module.exports = router;

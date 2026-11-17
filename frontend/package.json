@@ -1,21 +1,15 @@
 {
-    "name": "kaspi-frontend",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "dev": "next dev -p 3000",
-        "build": "next build",
-        "start": "next start -p 3000"
-    },
-    "dependencies": {
-        "axios": "latest",
-        "next": "latest",
-        "pg": "^8.14.1",
-        "postcss-cli": "^11.0.1",
-        "react": "latest",
-        "react-dom": "latest"
-    },
-    "devDependencies": {
-        "@tailwindcss/postcss": "^4.1.4"
-    }
+  "name": "shopiq-frontend",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev -p 3000",
+    "start": "next start -p 3000"
+  },
+  "version": "2.0.0",
+  "private": true,
+  "dependencies": {
+    "react-dom": "19.3.1",
+    "react": "19.3.1",
+    "next": "16.4.6"
+  }
 }

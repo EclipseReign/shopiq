@@ -1518,7 +1518,7 @@
     -> Subcategory: Галстуки и бабочки (/shop/c/ties%20and%20bow%20ties/)
     -> Subcategory: Аксессуары для спецодежды (/shop/c/workwear%20accessories/)
     -> Subcategory: Подтяжки (/shop/c/fashion%20suspenders/)
-  Category: Свадебные аксессуары (/shop/c/clothing%20accessories/    /shop/c/fashion%20glasses%20and%20accessories/      /shop/c/fashion%20accessory%20sets/ /shop/c/wedding%20accessories/)
+  Category: Свадебные аксессуары (/shop/c/wedding%20accessories/)
 Одежда (/shop/c/fashion/):
   Category: Женщинам (/shop/c/women%20fashion/)
     -> Subcategory: Женское нижнее белье (/shop/c/women%20underwear/)

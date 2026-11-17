@@ -1,190 +1,95 @@
-# Shopiq: E-commerce Insights and Scraping Tool 🛍️
+# ShopIQ
 
-Shopiq is a comprehensive tool designed to provide e-commerce insights through web scraping and data analysis. It consists of a frontend built with Next.js, a backend powered by Node.js and Express, and a Python scraper. The project aims to automate the process of collecting product data, categorizing it, and presenting it in a user-friendly interface. It solves the problem of manually gathering and organizing e-commerce product information, making it easier to analyze market trends and competitor strategies.
+Каталог и аналитика публичных карточек Kaspi. Next.js + React, Express, Python + Selenium. Локальное хранилище SQLite, для сервера поддерживается PostgreSQL.
 
-## 🚀 Key Features
+## Быстрый запуск
 
-- **Automated Web Scraping**: Scrapes product data from various e-commerce websites using Selenium and Python.
-- **Backend API**: Provides API endpoints for accessing scraped data and managing categories using Node.js, Express, and PostgreSQL.
-- **Frontend Interface**: Offers a user-friendly interface for browsing products and categories built with Next.js and React.
-- **Data Storage**: Stores scraped data and category information in a PostgreSQL database.
-- **Environment Variable Configuration**: Uses `.env` files to manage sensitive information and configuration settings.
-- **CORS Support**: Enables Cross-Origin Resource Sharing (CORS) to allow requests from different domains.
-- **Reproducible Builds**: Uses `package-lock.json` and `requirements.txt` to ensure consistent dependency versions across different environments.
-- **Category Management**: Allows users to retrieve and manage product categories.
+Нужны Node.js 22.16+ и Python 3.10+. Chrome требуется для сбора новых данных.
 
-## 🛠️ Tech Stack
-
-Here's a breakdown of the technologies used in this project:
-
-| Category    | Technology          | Description                                                                                                |
-|-------------|-----------------------|------------------------------------------------------------------------------------------------------------|
-| **Frontend**  | Next.js             | React framework for building user interfaces with server-side rendering and static site generation.      |
-|             | React               | JavaScript library for building user interfaces.                                                           |
-|             | axios               | HTTP client for making API requests.                                                                       |
-|             | Tailwind CSS        | Utility-first CSS framework for styling the frontend.                                                     |
-|             | PostCSS             | Tool for transforming CSS with JavaScript.                                                                 |
-| **Backend**   | Node.js             | JavaScript runtime environment for building the backend server.                                          |
-|             | Express             | Web application framework for Node.js.                                                                     |
-|             | PostgreSQL          | Relational database for storing product data and category information.                                    |
-|             | `pg`                | PostgreSQL client for Node.js.                                                                             |
-|             | `body-parser`       | Middleware to parse incoming request bodies.                                                              |
-|             | `cors`              | Middleware to enable Cross-Origin Resource Sharing (CORS).                                                |
-|             | `dotenv`            | Loads environment variables from a `.env` file into `process.env`.                                         |
-|             | `nodemon`           | Tool that automatically restarts the server when file changes are detected (development dependency).        |
-| **Scraper**   | Python              | Programming language used for the web scraper.                                                             |
-|             | Selenium            | Web automation framework used for controlling web browsers.                                                |
-|             | `webdriver_manager` | Library that automatically manages the drivers for Selenium web browsers.                                  |
-|             | `psycopg2-binary`   | PostgreSQL adapter for Python.                                                                             |
-| **Build Tools**| npm/yarn            | Package managers for managing project dependencies.                                                        |
-
-## 📦 Getting Started / Setup Instructions
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- Node.js (v16 or higher)
-- npm or yarn
-- Python 3.6+
-- PostgreSQL
-- Selenium Web Drivers (ChromeDriver, GeckoDriver, etc.)
-
-### Installation
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone <repository_url>
-    cd shopiq
-    ```
-
-2.  **Backend Setup:**
-
-    ```bash
-    cd backend
-    npm install  # or yarn install
-    ```
-
-    Create a `.env` file in the `backend` directory and configure the following environment variables:
-
-    ```
-    DATABASE_URL=<your_postgresql_connection_string>
-    PORT=5000 # Optional, defaults to 5000
-    ```
-
-3.  **Frontend Setup:**
-
-    ```bash
-    cd ../frontend
-    npm install  # or yarn install
-    ```
-
-    Create a `.env` file in the `frontend` directory and configure the following environment variable:
-
-    ```
-    NEXT_PUBLIC_API_URL=<your_backend_api_url>  # e.g., http://localhost:5000/api
-    ```
-
-4.  **Scraper Setup:**
-
-    ```bash
-    cd ../backend/scraper
-    pip install -r requirements.txt
-    ```
-
-    Create a `.env` file in the `backend/scraper` directory and configure the following environment variable:
-
-    ```
-    DATABASE_URL=<your_postgresql_connection_string>
-    ```
-
-### Running Locally
-
-1.  **Start the Backend Server:**
-
-    ```bash
-    cd backend
-    npm run dev # or yarn dev
-    ```
-
-    This will start the backend server using `nodemon`, which automatically restarts the server on file changes.
-
-2.  **Start the Frontend Development Server:**
-
-    ```bash
-    cd frontend
-    npm run dev # or yarn dev
-    ```
-
-    This will start the Next.js development server.  Open your browser and navigate to `http://localhost:3000` (or the port specified by Next.js).
-
-3.  **Run the Scraper (Optional):**
-
-    ```bash
-    cd backend/scraper
-    python your_scraper_script.py # Replace with the actual scraper script name
-    ```
-
-    This will run the scraper script to collect product data and store it in the database.  Make sure you have configured the `DATABASE_URL` correctly in the scraper's `.env` file.
-
-## 📂 Project Structure
-
-```
-shopiq/
-├── backend/
-│   ├── .env                  # Backend environment variables
-│   ├── package.json          # Backend project dependencies and scripts
-│   ├── package-lock.json     # Backend dependency lockfile
-│   ├── server.js             # Main entry point for the backend server
-│   ├── routes/
-│   │   └── api.js            # API routes definition
-│   ├── controllers/
-│   │   ├── scraperController.js # Logic for handling product scraping requests
-│   │   └── categoryController.js # Logic for handling category related requests
-│   └── scraper/
-│       ├── .env              # Scraper environment variables
-│       ├── requirements.txt  # Scraper Python dependencies
-│       └── your_scraper_script.py # The scraper script (replace with actual name)
-├── frontend/
-│   ├── .env                  # Frontend environment variables
-│   ├── package.json          # Frontend project dependencies and scripts
-│   ├── package-lock.json     # Frontend dependency lockfile
-│   ├── next.config.js        # Next.js configuration file
-│   ├── pages/
-│   │   ├── _app.js           # Custom App component
-│   │   └── index.js          # Main landing page
-│   │   └── categories.js     # Categories page
-│   ├── components/
-│   │   └── Layout.js         # Layout component for consistent page structure
-│   └── styles/
-│       └── globals.css       # Global CSS styles
-└── README.md               # This file
+```sh
+npm ci
 ```
 
-## 📸 Screenshots
+Скопируйте `.env.example` в `.env`. Затем запустите оба сервиса одной командой.
 
-(Add screenshots of the application here to showcase its features and UI)
+```sh
+npm run dev
+```
 
-## 🤝 Contributing
+Откройте [ShopIQ](http://localhost:3000). Backend слушает `127.0.0.1:5000`. База создаётся автоматически до запуска API. Для просмотра сохранённого каталога достаточно стандартной библиотеки Python.
 
-We welcome contributions to Shopiq! If you'd like to contribute, please follow these steps:
+Для сбора установите Python-зависимости. Можно использовать виртуальную среду и указать её интерпретатор в `PYTHON_BIN`.
 
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and commit them with clear, descriptive messages.
-4.  Submit a pull request.
+```sh
+python -m pip install -r backend/scraper/requirements.txt
+```
 
-## 📝 License
+На странице «Категории» раскройте нужный раздел, откройте категорию и нажмите «Обновить категорию». На странице «Сбор данных» задайте город, число страниц на конечную категорию и число браузеров. Доступны запуск, прогресс, журнал последних событий и остановка. Сбор выполняется фоном, страницу можно закрыть.
 
-This project is licensed under the [MIT License](LICENSE) - see the `LICENSE` file for details.
+## Данные и расчёты
 
-## 📬 Contact
+- В репозитории сохранён исходный архив `kaspi.sqlite` за апрель 2025 года. Первый запуск копирует его в `backend/data/shopiq.sqlite`. В рабочей копии исходные строки дополнительно сохраняются в `products_before_v2`.
+- Повторы архива объединяются по категории и нормализованному названию, сохраняется последняя строка. Для новых наблюдений используется ID товара Kaspi. Совпадающая старая карточка переводится на этот ID при первом обновлении.
+- Средняя цена рассчитывается по карточкам с известной положительной ценой. Средний рейтинг рассчитывается по карточкам с известным рейтингом. Рядом с показателями выводится количество карточек с данными.
+- Количество отзывов суммируется по текущим карточкам. Расчёт продаж и выручки требует отдельного источника заказов. Ранее сохранявшееся поле `computed_revenue` остаётся в архиве для восстановления.
+- Отсутствующие цена, рейтинг и отзывы сохраняются как `NULL` и отображаются знаком `—`. Явное значение «нет отзывов» сохраняется как ноль.
+- Метрики раздела включают все вложенные категории. Поиск и даты одинаково применяются к списку товаров и его агрегатам. Диапазон дат включает целиком конечный день, даты относятся к последнему сохранённому наблюдению карточки.
+- Хранится последнее наблюдение товара. При смене города обновляются цена и `city_id`. Полная история цен и независимые срезы по городам требуют отдельной модели наблюдений.
+- Названия категорий архива сопоставляются с каталогом по точному совпадению. Для исторических названий без совпадения сохраняются отдельные разделы.
+- Карточки, которые перестали встречаться при ограниченном сборе, сохраняют прежнюю дату. Это позволяет просматривать архив и фильтровать свежие наблюдения.
 
-If you have any questions or suggestions, feel free to contact us at [your_email@example.com](mailto:your_email@example.com).
+Время в интерфейсе отображается по Казахстану, UTC+5.
 
-## 💖 Thanks Message
+## Сбор из командной строки
 
-Thank you for checking out Shopiq! We hope this tool helps you gain valuable insights into the e-commerce landscape. Your contributions and feedback are highly appreciated!
+```sh
+python backend/scraper/scraper.py --category-id 16 --max-pages 2 --workers 1 --city-id 750000000
+```
 
-This is written by [readme.ai](https://readme-generator-phi.vercel.app/).
+ID категории можно получить из адреса её страницы. Значение `16` соответствует смартфонам в новой локальной базе. При существующей PostgreSQL-базе ID могут отличаться. Запуск без `--category-id` обходит все конечные категории со ссылкой. `new_scraper.py` поддерживает те же параметры.
+
+Сбор использует 1 браузер по умолчанию, допускает до 4. Один браузер переиспользуется для нескольких категорий. Изображения при загрузке отключены. Поля всех карточек страницы извлекаются одним обращением к браузеру после стабилизации списка. Начальная загрузка категории повторяется до трёх раз при тайм-ауте. Между страницами выдерживается пауза. Для перехода используется кнопка пагинации сайта с ожиданием смены карточек. Каждая страница сохраняется отдельной транзакцией с upsert. Повтор страницы завершает категорию с явной ошибкой.
+
+API допускает одну активную задачу на приложение. Состояние хранится в базе, прерванный перезапуском сбор отмечается соответствующим статусом. Для работы с несколькими экземплярами backend потребуется отдельный исполнитель задач. Лимит запуска задаётся `SCRAPER_TIMEOUT_MINUTES`, по умолчанию 30 минут. Значение `0` позволяет отключить лимит. При остановке закрываются браузеры, зависшее дерево процесса завершается через 120 секунд.
+
+## Конфигурация
+
+| Переменная | Назначение |
+| --- | --- |
+| `SHOPIQ_DB_PATH` | Путь SQLite, относительно корня репозитория |
+| `DATABASE_URL` | При заданном значении используется PostgreSQL |
+| `PGSSLMODE` | Режим TLS PostgreSQL, например `require` |
+| `PG_POOL_MAX` | Размер пула PostgreSQL, по умолчанию 5 подключений |
+| `PORT` | Порт интерфейса при запуске из корня, по умолчанию 3000 |
+| `API_PORT` | Порт backend, по умолчанию 5000 |
+| `BACKEND_URL` | Адрес backend для серверного прокси Next.js |
+| `PYTHON_BIN` | Python для миграции и сбора |
+| `CHROME_BINARY` | Необязательный путь к Chrome |
+| `SCRAPER_TOKEN` | Bearer-токен удалённого управления сбором |
+| `SCRAPER_TIMEOUT_MINUTES` | Лимит времени одной задачи |
+
+Браузер обращается к API через Next.js на том же домене. Адрес backend и доступ к БД остаются на сервере. Для удалённых POST-запросов требуется `Authorization: Bearer <SCRAPER_TOKEN>`. Локальный интерфейс работает без токена. Значение токена можно ввести на странице сбора, оно хранится в памяти вкладки.
+
+Для PostgreSQL создайте пустую базу и задайте `DATABASE_URL`. Миграция создаёт таблицы до индексов, добавляет недостающие столбцы к старой таблице `products` и сохраняет исходные строки. Архив SQLite автоматически импортируется в локальную SQLite-базу. Для PostgreSQL исходными данными служат строки выбранной PostgreSQL-базы.
+
+Файлы `.env` исключены из Git. Старые конфигурации локального клона сохранены как `.env.legacy`. Опубликованные ранее секреты следует перевыпустить, поскольку история Git хранит предыдущие версии файлов.
+
+## Проверка и production-сборка
+
+```sh
+npm test
+npm run build
+npm start
+```
+
+Тесты проверяют Unicode-пробелы в цене, дробные цены, отсутствующие значения, разбор рейтинга и отзывов, иерархию категорий, повторяемую миграцию, сохранение архива, обновление без дублей, рекурсивные агрегаты, поиск по кириллице, экранирование поиска, пагинацию, даты, проверку входных параметров и состояние задач.
+
+Списки возвращаются по 25 строк, максимум 100. Поиск в интерфейсе отправляется после 300 мс без ввода. Предыдущие запросы отменяются при смене фильтров. Состояние сбора опрашивается раз в 2,5 секунды во время работы и раз в 15 секунд в ожидании.
+
+API включает `GET /api/health`, `/api/overview`, `/api/products`, `/api/categories`, `/api/categories/:id`, `/api/scrape/status`, `POST /api/scrape` и `/api/scrape/cancel`. Для товаров доступны `categoryId`, `search`, `sort`, `dateFrom`, `dateTo`, `page`, `pageSize`. Сортировки — `default`, `price-asc`, `price-desc`, `rating`, `reviews`.
+
+Для серверного размещения нужны Python, Chrome и доступный ChromeDriver, постоянный диск для SQLite либо PostgreSQL. Установку и доступность Chrome проверяет Selenium Manager при первом запуске. Производственное окружение развёртывается отдельно от локального клона.
+
+## Лицензия
+
+MIT. См. `LICENSE`.

@@ -2,6 +2,7 @@ const { spawn, execFile } = require("node:child_process");
 const { randomUUID, timingSafeEqual } = require("node:crypto");
 const { mkdir, writeFile, unlink } = require("node:fs/promises");
 const path = require("node:path");
+const { hostname } = require('node:os');
 const db = require("../models/db");
 const { integer, badRequest } = require("./catalog");
 const root = path.resolve(__dirname, "../..");
@@ -31,19 +32,29 @@ function authorize(req, res, next) {
 }
 
 async function recover() {
-  await db.query(
-    "UPDATE scraper_runs SET status='interrupted',finished_at=$1,error=$2 WHERE status IN ('running','cancelling')",
-    [
-      new Date().toISOString(),
-      "Сервер был перезапущен. Собранные страницы сохранены.",
-    ],
-  );
+  const runs = (await db.query("SELECT * FROM scraper_runs WHERE status IN ('running','cancelling')")).rows;
+  for (const run of runs) {
+    if (run.id === active?.id || standaloneAlive(run)) continue;
+    await db.query("UPDATE scraper_runs SET status='interrupted',finished_at=$1,error=$2 WHERE id=$3 AND status IN ('running','cancelling')",
+      [new Date().toISOString(),'Исполнитель остановлен. Сохранённые страницы доступны для проверки.',run.id]);
+  }
   await db.query(
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_scraper_run ON scraper_runs((1)) WHERE status IN ('running','cancelling')",
   );
 }
 
+function standaloneAlive(run) {
+  const options = JSON.parse(run.options || '{}');
+  const progress = JSON.parse(run.progress || '{}');
+  if (options.ownerMode !== 'standalone' || options.ownerHost !== hostname() ||
+      !Number.isInteger(options.ownerPid) || options.ownerPid < 1 ||
+      !progress.heartbeat || Date.now() - Date.parse(progress.heartbeat) > 180000) return false;
+  try { process.kill(options.ownerPid,0); return true; }
+  catch { return false; }
+}
+
 async function status() {
+  await recover();
   const result = await db.query(
     "SELECT * FROM scraper_runs ORDER BY started_at DESC LIMIT 1",
   );
@@ -67,6 +78,9 @@ async function start(body = {}) {
   const categoryId = integer(body.categoryId, "категории", null);
   const maxPages = integer(body.maxPages, "лимита страниц", 3, 100);
   const workers = integer(body.workers, "числа браузеров", 1, 4);
+  for (const key of ['full','discover']) {
+    if (body[key] !== undefined && typeof body[key] !== 'boolean') throw badRequest('Некорректный режим сбора');
+  }
   const cityId = String(body.cityId ?? "750000000");
   if (!/^\d{9}$/.test(cityId))
     throw badRequest("ID города должен состоять из 9 цифр");
@@ -78,7 +92,7 @@ async function start(body = {}) {
   }
   const id = randomUUID();
   const startedAt = new Date().toISOString();
-  const options = { categoryId, maxPages, workers, cityId };
+  const options = { categoryId, maxPages, workers, cityId, full: Boolean(body.full), discover: Boolean(body.discover), engine: 'http' };
   const cancelFile = path.join(root, "backend/data", `${id}.cancel`);
   await mkdir(path.dirname(cancelFile), { recursive: true });
   try {
@@ -103,7 +117,8 @@ async function start(body = {}) {
     throw error;
   }
   const args = [
-    path.join(root, "backend/scraper/scraper.py"),
+    path.join(root, "backend/scraper/http-scraper.mjs"),
+    '--run-id',id,
     "--max-pages",
     String(maxPages),
     "--workers",
@@ -114,7 +129,9 @@ async function start(body = {}) {
     cancelFile,
   ];
   if (categoryId) args.push("--category-id", String(categoryId));
-  const child = spawn(process.env.PYTHON_BIN || "python", args, {
+  if (options.full) args.push('--full');
+  if (options.discover) args.push('--discover');
+  const child = spawn(process.execPath, args, {
     cwd: root,
     env: { ...process.env, PYTHONIOENCODING: "utf-8" },
     windowsHide: true,
@@ -156,8 +173,12 @@ async function start(body = {}) {
       if (event.type === "start")
         job.progress.totalCategories = event.categories;
       if (event.type === "error") job.error = event.message;
-      if (event.type === "finish" && event.errors.length)
-        job.error = event.errors.join("\n").slice(-4000);
+      if (event.type === 'heartbeat') job.progress.heartbeat = event.heartbeat;
+      if (event.type === 'finish') {
+        job.result = event;
+        job.progress.coverage = event.coverage;
+        if (event.errors?.length) job.error = event.errors.join('\n').slice(-4000);
+      }
       job.progress.events = [...job.progress.events, event].slice(-12);
       const progress = JSON.stringify(job.progress);
       writes = writes
@@ -177,8 +198,7 @@ async function start(body = {}) {
   child.once("error", (error) => {
     job.error = error.message;
   });
-  // Request graceful cancellation so Selenium can close every driver.
-  const timeoutMinutes = Number(process.env.SCRAPER_TIMEOUT_MINUTES ?? 30);
+  const timeoutMinutes = Number(process.env.SCRAPER_TIMEOUT_MINUTES ?? (options.full ? 0 : 30));
   const timeout =
     timeoutMinutes > 0
       ? setTimeout(
@@ -200,7 +220,9 @@ async function start(body = {}) {
         ? "failed"
         : job.cancelling
           ? "cancelled"
-          : code === 0
+          : job.result?.partial
+            ? 'partial'
+          : code === 0 && job.result
             ? "completed"
             : "failed";
       await db.query(
@@ -209,7 +231,7 @@ async function start(body = {}) {
           state,
           new Date().toISOString(),
           state === "failed"
-            ? job.error || `Python завершился с кодом ${code}`
+            ? job.error || `Исполнитель завершился с кодом ${code}`
             : null,
           id,
         ],
@@ -234,7 +256,15 @@ async function start(body = {}) {
 }
 
 async function cancel() {
-  if (!active) return status();
+  if (!active) {
+    const current = await status();
+    if (current.run && ['running','cancelling'].includes(current.run.status) &&
+        /^[a-f0-9-]{36}$/.test(current.run.id)) {
+      await writeFile(path.join(root,'backend/data',`${current.run.id}.cancel`),'cancel');
+      await db.query("UPDATE scraper_runs SET status='cancelling' WHERE id=$1 AND status='running'",[current.run.id]);
+    }
+    return status();
+  }
   const job = active;
   job.cancelling = true;
   await writeFile(job.cancelFile, "cancel");

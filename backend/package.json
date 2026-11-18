@@ -1,11 +1,11 @@
 {
   "name": "shopiq-backend",
   "scripts": {
-    "scrape": "python scraper/scraper.py",
+    "scrape": "node scraper/http-scraper.mjs",
     "dev": "node --watch server.js",
     "start": "node server.js"
   },
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "dependencies": {
     "dotenv": "16.6.1",

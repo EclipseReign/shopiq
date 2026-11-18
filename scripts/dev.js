@@ -18,9 +18,9 @@ const children = [
   spawn(
     process.execPath,
     [
-      require.resolve("next/dist/bin/next"),
-      production ? "start" : "dev",
-      "-p",
+      path.join(path.dirname(require.resolve('vite/package.json')), 'bin/vite.js'),
+      production ? "preview" : "dev",
+      "--port",
       frontendPort,
     ],
     {

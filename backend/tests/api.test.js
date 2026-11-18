@@ -199,50 +199,20 @@ test("interrupted runs recover and only one run can be active", async () => {
   assert.equal((await scraper.status()).run.status, "interrupted");
 });
 
-test("Next.js proxy accepts empty cancellation requests and protects remote writes", async () => {
-  const { pathToFileURL } = require("node:url");
-  const { default: proxy } = await import(
-    pathToFileURL(
-      path.resolve(__dirname, "../../frontend/pages/api/[...path].js"),
-    )
-  );
-  const originalBackend = process.env.BACKEND_URL;
-  process.env.BACKEND_URL = base.replace(/\/api$/, "");
-  let statusCode;
-  let payload;
-  const response = {
-    setHeader() {},
-    status(code) {
-      statusCode = code;
-      return this;
-    },
-    json(data) {
-      payload = data;
-      return this;
-    },
-  };
-  const request = {
-    method: "POST",
-    socket: { remoteAddress: "127.0.0.1" },
-    headers: { host: "localhost:3000" },
-    query: { path: ["scrape", "cancel"] },
-    body: "",
-  };
-  try {
-    await proxy(request, response);
-    assert.equal(statusCode, 200);
-    assert.ok(Object.hasOwn(payload, "run"));
-    await proxy(
-      {
-        ...request,
-        socket: { remoteAddress: "192.0.2.1" },
-        headers: { host: "example.org" },
-      },
-      response,
-    );
-    assert.equal(statusCode, 403);
-  } finally {
-    if (originalBackend === undefined) delete process.env.BACKEND_URL;
-    else process.env.BACKEND_URL = originalBackend;
-  }
+test("empty cancellation request succeeds and foreign origins are denied", async () => {
+  const response = await fetch(`${base}/scrape/cancel`, { method:'POST' });
+  assert.equal(response.status,200);
+  assert.ok(Object.hasOwn(await response.json(),'run'));
+  assert.equal((await fetch(`${base}/scrape/cancel`,{method:'POST',headers:{Origin:'https://example.org'}})).status,403);
+});
+
+test('multi-category membership counts products once and city prices stay separate',async () => {
+  const product = (await db.query("SELECT id FROM products WHERE product_key='test:1'")).rows[0];
+  await db.query('INSERT INTO product_categories(product_id,category_id) VALUES($1,10000),($1,10001)',[product.id]);
+  await db.query("INSERT INTO product_city_prices(product_id,city_id,parsed_price,scraped_at) VALUES($1,'710000000',1700,'2026-02-01 12:00:00')",[product.id]);
+  assert.equal((await get('/categories/10000')).category.products_count,3);
+  const city = await get('/products?categoryId=10000&cityId=710000000');
+  assert.equal(city.pagination.total,1);
+  assert.equal(city.products[0].parsed_price,1700);
+  assert.equal((await get('/overview?categoryId=10000&cityId=710000000')).overview.average_price,1700);
 });

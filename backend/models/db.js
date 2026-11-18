@@ -4,6 +4,7 @@ const execFile = promisify(require("node:child_process").execFile);
 const root = path.resolve(__dirname, "../..");
 let database;
 let postgres;
+let transactionQueue = Promise.resolve();
 
 async function initialize() {
   await execFile(
@@ -51,7 +52,7 @@ async function initialize() {
   }
 }
 
-async function query(sql, values = []) {
+async function rawQuery(sql, values = []) {
   if (postgres) return database.query(sql, values);
   // Reorder repeated PostgreSQL parameters for SQLite's positional bindings.
   const bindings = [];
@@ -64,11 +65,36 @@ async function query(sql, values = []) {
   return { rows: [], rowCount: Number(statement.run(...bindings).changes) };
 }
 
+function query(sql, values = []) {
+  if (postgres) return rawQuery(sql, values);
+  return transactionQueue.then(() => rawQuery(sql, values));
+}
+
 async function close() {
+  await transactionQueue.catch(() => {});
   if (!database) return;
   if (postgres) await database.end();
   else database.close();
   database = null;
 }
 
-module.exports = { initialize, query, close };
+function transaction(callback) {
+  const operation = async () => {
+    const client = postgres ? await database.connect() : null;
+    const connection = client || { query: rawQuery };
+    try {
+      await connection.query(postgres ? 'BEGIN' : 'BEGIN IMMEDIATE');
+      const result = await callback(connection);
+      await connection.query('COMMIT');
+      return result;
+    } catch (error) {
+      await connection.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client?.release(); }
+  };
+  const result = transactionQueue.then(operation, operation);
+  transactionQueue = result.catch(() => {});
+  return result;
+}
+
+module.exports = { initialize, query, transaction, close };

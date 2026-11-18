@@ -1,10 +1,11 @@
 {
   "name": "shopiq",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "workspaces": [
     "backend",
-    "frontend"
+    "frontend",
+    "cloud"
   ],
   "engines": {
     "node": ">=22.16.0"
@@ -14,7 +15,11 @@
     "build": "npm run build --workspace frontend",
     "start": "node scripts/dev.js --production",
     "db:init": "python backend/scraper/storage.py",
-    "scrape": "python backend/scraper/scraper.py",
-    "test": "python -m unittest discover -s backend/tests -p test_*.py && node --test backend/tests/*.test.js"
+    "scrape": "node backend/scraper/http-scraper.mjs",
+    "test": "python -m unittest discover -s backend/tests -p test_*.py && node --test backend/tests/*.test.js",
+    "deploy": "npm run build && npm run deploy --workspace cloud"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.16"
   }
 }

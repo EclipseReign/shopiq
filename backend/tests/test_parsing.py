@@ -153,6 +153,7 @@ class StorageTests(unittest.TestCase):
         save_products([product], "750000000")
         product["parsed_price"] = Decimal("3500")
         save_products([product], "750000000")
+        save_products([product], "750000000")
         with connect() as db:
             self.assertEqual(
                 db.execute("SELECT COUNT(*) FROM products").fetchone()[0], 2
@@ -164,6 +165,8 @@ class StorageTests(unittest.TestCase):
                 ).fetchone(),
                 (3500, 7, None),
             )
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM price_history").fetchone()[0], 2)
+            self.assertEqual(db.execute("SELECT parsed_price FROM product_city_prices WHERE city_id='750000000'").fetchone()[0], 3500)
 
 
 if __name__ == "__main__":

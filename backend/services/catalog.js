@@ -32,6 +32,15 @@ function date(value, name) {
 function filters(query) {
   const values = [];
   const conditions = [];
+  let source = 'products p';
+  if (query.cityId !== undefined && query.cityId !== '') {
+    if (!/^\d{9}$/.test(String(query.cityId))) throw badRequest('Некорректный код города');
+    values.push(String(query.cityId));
+    source = `(SELECT original.id,original.category_id,original.name,original.brand,original.rating,
+      original.reviews_count,original.image_url,original.product_url,original.external_id,snapshot.parsed_price,
+      snapshot.scraped_at,snapshot.city_id FROM products original
+      JOIN product_city_prices snapshot ON snapshot.product_id=original.id AND snapshot.city_id=$1) p`;
+  }
   const categoryId = integer(query.categoryId, "категории", null);
   const dateFrom = date(query.dateFrom, "начала");
   const dateTo = date(query.dateTo, "окончания");
@@ -39,7 +48,8 @@ function filters(query) {
     throw badRequest("Дата начала должна предшествовать дате окончания");
   if (categoryId) {
     values.push(categoryId);
-    conditions.push(`p.category_id IN (SELECT id FROM selected)`);
+    conditions.push(`(p.category_id IN (SELECT id FROM selected) OR EXISTS(
+      SELECT 1 FROM product_categories pc WHERE pc.product_id=p.id AND pc.category_id IN (SELECT id FROM selected)))`);
   }
   if (query.search !== undefined && typeof query.search !== "string")
     throw badRequest("Некорректный поисковый запрос");
@@ -64,10 +74,11 @@ function filters(query) {
   }
   return {
     cte: categoryId
-      ? "WITH RECURSIVE selected(id) AS (SELECT id FROM categories WHERE id=$1 UNION SELECT c.id FROM categories c JOIN selected s ON c.parent_id=s.id)"
+      ? `WITH RECURSIVE selected(id) AS (SELECT id FROM categories WHERE id=$${query.cityId ? 2 : 1} UNION SELECT c.id FROM categories c JOIN selected s ON c.parent_id=s.id)`
       : "",
     where: conditions.length ? `WHERE ${conditions.join(" AND ")}` : "",
     values,
+    source,
   };
 }
 
@@ -80,7 +91,7 @@ const sorts = {
 };
 
 async function getProducts(query) {
-  const { cte, where, values } = filters(query);
+  const { cte, where, values, source } = filters(query);
   const page = integer(query.page, "страницы", 1, 1_000_000);
   const pageSize = integer(query.pageSize, "размера страницы", 25, 100);
   const sort = query.sort || "default";
@@ -88,13 +99,13 @@ async function getProducts(query) {
     throw badRequest("Неизвестный способ сортировки");
   const [count, products] = await Promise.all([
     db.query(
-      `${cte} SELECT COUNT(*) AS total FROM products p ${where}`,
+      `${cte} SELECT COUNT(*) AS total FROM ${source} ${where}`,
       values,
     ),
     db.query(
       `${cte} SELECT p.id,p.category_id,c.name AS category_name,p.name,p.parsed_price,p.rating,
-      p.reviews_count,p.image_url,p.product_url,p.scraped_at,p.city_id,p.brand
-      FROM products p LEFT JOIN categories c ON c.id=p.category_id ${where}
+      p.reviews_count,p.image_url,p.product_url,p.scraped_at,p.city_id,p.brand,p.external_id
+      FROM ${source} LEFT JOIN categories c ON c.id=p.category_id ${where}
       ORDER BY ${sorts[sort]},p.id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
       [...values, pageSize, (page - 1) * pageSize],
     ),
@@ -111,14 +122,14 @@ async function getProducts(query) {
 }
 
 async function getOverview(query) {
-  const { cte, where, values } = filters(query);
+  const { cte, where, values, source } = filters(query);
   const result = await db.query(
     `${cte} SELECT COUNT(*) AS products_count,COUNT(DISTINCT p.category_id) AS categories_count,
     COUNT(p.parsed_price) AS priced_count,AVG(p.parsed_price) AS average_price,
     MIN(p.parsed_price) AS min_price,MAX(p.parsed_price) AS max_price,
     SUM(p.reviews_count) AS reviews_count,COUNT(p.reviews_count) AS reviewed_count,
     AVG(p.rating) AS average_rating,COUNT(p.rating) AS rated_count,
-    MAX(p.scraped_at) AS last_updated FROM products p ${where}`,
+    MAX(p.scraped_at) AS last_updated FROM ${source} ${where}`,
     values,
   );
   const overview = result.rows[0];
@@ -135,11 +146,14 @@ async function getCategories(parentId) {
     `WITH RECURSIVE tree(root,id) AS (
       SELECT id,id FROM categories WHERE ${id ? "parent_id=$1" : "parent_id IS NULL"}
       UNION SELECT t.root,c.id FROM categories c JOIN tree t ON c.parent_id=t.id
+    ), membership AS (
+      SELECT t.root,p.id FROM tree t JOIN products p ON p.category_id=t.id
+      UNION SELECT t.root,pc.product_id FROM tree t JOIN product_categories pc ON pc.category_id=t.id
     ), metrics AS (
       SELECT t.root,COUNT(p.id) AS products_count,AVG(p.parsed_price) AS average_price,
         SUM(p.reviews_count) AS reviews_count,MAX(p.scraped_at) AS last_updated
-      FROM tree t JOIN products p ON p.category_id=t.id GROUP BY t.root
-    ) SELECT c.id,c.name,c.parent_id,c.level,
+      FROM membership t JOIN products p ON p.id=t.id GROUP BY t.root
+    ) SELECT c.id,c.name,c.parent_id,c.level,c.source_active,c.source_code,
       EXISTS(SELECT 1 FROM categories child WHERE child.parent_id=c.id) AS has_children,
       COALESCE(m.products_count,0) AS products_count,m.average_price,m.reviews_count,m.last_updated
     FROM categories c LEFT JOIN metrics m ON m.root=c.id

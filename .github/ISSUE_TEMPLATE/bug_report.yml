@@ -1,0 +1,24 @@
+name: Ошибка
+description: Сообщить о воспроизводимой проблеме ShopIQ
+body:
+  - type: markdown
+    attributes:
+      value: Не публикуйте пароли, токены, секретные ссылки прайса и XML рабочих магазинов. Об уязвимостях сообщайте через Security → Report a vulnerability.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Шаги воспроизведения
+      description: Страница, действия, город и публичный ID товара, если применимо.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемый и фактический результат
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Окружение
+      placeholder: Браузер, устройство, облачная или локальная версия

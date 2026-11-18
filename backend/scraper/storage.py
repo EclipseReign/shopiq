@@ -6,6 +6,7 @@ import os
 import sqlite3
 from contextlib import closing, contextmanager
 from datetime import datetime, timezone
+from decimal import Decimal
 from pathlib import Path
 
 from parsing import parse_category_file, parse_price
@@ -116,6 +117,61 @@ def seed_categories(db):
             ids[category["temp_id"]] = row[0]
 
 
+def initialize_catalog_schema(db):
+    if db.execute("SELECT version FROM schema_migrations WHERE version=2").fetchone():
+        return
+    columns = db.columns("categories")
+    for name, kind in {
+        "source_code": "TEXT",
+        "source_active": "INTEGER NOT NULL DEFAULT 0",
+        "discovered_at": "TEXT",
+    }.items():
+        if name not in columns:
+            db.execute(f"ALTER TABLE categories ADD COLUMN {name} {kind}")
+    db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_code ON categories(source_code)")
+    db.execute("""CREATE TABLE IF NOT EXISTS product_categories(
+        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id),
+        PRIMARY KEY(product_id,category_id))""")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_product_categories_category ON product_categories(category_id,product_id)")
+    db.execute("""INSERT INTO product_categories(product_id,category_id)
+        SELECT id,category_id FROM products WHERE category_id IS NOT NULL
+        ON CONFLICT(product_id,category_id) DO NOTHING""")
+    db.execute("""CREATE TABLE IF NOT EXISTS product_city_prices(
+        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        city_id TEXT NOT NULL,parsed_price NUMERIC,scraped_at TIMESTAMP NOT NULL,
+        PRIMARY KEY(product_id,city_id))""")
+    db.execute("""INSERT INTO product_city_prices(product_id,city_id,parsed_price,scraped_at)
+        SELECT id,city_id,parsed_price,scraped_at FROM products
+        WHERE city_id IS NOT NULL AND parsed_price IS NOT NULL AND scraped_at IS NOT NULL
+        ON CONFLICT(product_id,city_id) DO NOTHING""")
+    primary = "SERIAL PRIMARY KEY" if db.postgres else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    db.execute(f"""CREATE TABLE IF NOT EXISTS price_history(
+        id {primary},product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        city_id TEXT NOT NULL,parsed_price NUMERIC NOT NULL,scraped_at TIMESTAMP NOT NULL)""")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_price_history_product_city ON price_history(product_id,city_id,scraped_at)")
+    db.execute("""CREATE TABLE IF NOT EXISTS catalog_discoveries(
+        id TEXT PRIMARY KEY,city_id TEXT NOT NULL,status TEXT NOT NULL,
+        started_at TEXT NOT NULL,finished_at TEXT,categories_count INTEGER,
+        leaves_count INTEGER,error TEXT)""")
+    db.execute("""CREATE TABLE IF NOT EXISTS catalog_tasks(
+        run_id TEXT NOT NULL REFERENCES scraper_runs(id),category_id INTEGER NOT NULL REFERENCES categories(id),
+        city_id TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',next_page INTEGER NOT NULL DEFAULT 0,
+        expected_initial INTEGER,expected_latest INTEGER,page_size INTEGER,found_count INTEGER NOT NULL DEFAULT 0,
+        invalid_count INTEGER NOT NULL DEFAULT 0,pages_done INTEGER NOT NULL DEFAULT 0,
+        error TEXT,updated_at TEXT NOT NULL,PRIMARY KEY(run_id,category_id))""")
+    db.execute("""CREATE TABLE IF NOT EXISTS catalog_seen(
+        run_id TEXT NOT NULL,category_id INTEGER NOT NULL,product_id INTEGER NOT NULL REFERENCES products(id),
+        PRIMARY KEY(run_id,category_id,product_id),
+        FOREIGN KEY(run_id,category_id) REFERENCES catalog_tasks(run_id,category_id))""")
+    db.execute("""CREATE TABLE IF NOT EXISTS catalog_pages(
+        run_id TEXT NOT NULL,category_id INTEGER NOT NULL,page INTEGER NOT NULL,signature TEXT NOT NULL,
+        PRIMARY KEY(run_id,category_id,page),UNIQUE(run_id,category_id,signature),
+        FOREIGN KEY(run_id,category_id) REFERENCES catalog_tasks(run_id,category_id))""")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_catalog_tasks_status ON catalog_tasks(run_id,status)")
+    db.execute("INSERT INTO schema_migrations(version) VALUES(2)")
+
+
 def initialize():
     if not os.getenv("DATABASE_URL"):
         target = database_path()
@@ -139,6 +195,7 @@ def initialize():
         if db.execute(
             "SELECT version FROM schema_migrations WHERE version=1"
         ).fetchone():
+            initialize_catalog_schema(db)
             return
         db.execute(
             f"""CREATE TABLE IF NOT EXISTS categories (
@@ -225,6 +282,7 @@ def initialize():
             finished_at TEXT, options TEXT, progress TEXT, error TEXT)"""
         )
         db.execute("INSERT INTO schema_migrations(version) VALUES(1)")
+        initialize_catalog_schema(db)
 
 
 def save_products(products, city_id=None):
@@ -278,6 +336,31 @@ def save_products(products, city_id=None):
                 f"INSERT INTO products({','.join(columns)}) VALUES({','.join('?' for _ in columns)}) ON CONFLICT(product_key) DO UPDATE SET {updates}",
                 values,
             )
+            product_id = db.execute("SELECT id FROM products WHERE product_key=?", (key,)).fetchone()[0]
+            db.execute(
+                "INSERT INTO product_categories(product_id,category_id) VALUES(?,?) ON CONFLICT(product_id,category_id) DO NOTHING",
+                (product_id, product["category_id"]),
+            )
+            if city_id:
+                previous = db.execute(
+                    "SELECT parsed_price FROM product_city_prices WHERE product_id=? AND city_id=?",
+                    (product_id, city_id),
+                ).fetchone()
+                observed_at = values[-2]
+                parsed_price = product.get("parsed_price")
+                price_value = str(parsed_price) if parsed_price is not None else None
+                changed = not previous or previous[0] is None or (
+                    parsed_price is not None and Decimal(str(previous[0])) != Decimal(str(parsed_price))
+                )
+                if parsed_price is not None and changed:
+                    db.execute(
+                        "INSERT INTO price_history(product_id,city_id,parsed_price,scraped_at) VALUES(?,?,?,?)",
+                        (product_id, city_id, price_value, observed_at),
+                    )
+                db.execute(
+                    "INSERT INTO product_city_prices(product_id,city_id,parsed_price,scraped_at) VALUES(?,?,?,?) ON CONFLICT(product_id,city_id) DO UPDATE SET parsed_price=excluded.parsed_price,scraped_at=excluded.scraped_at",
+                    (product_id, city_id, price_value, observed_at),
+                )
     return len(products)
 
 

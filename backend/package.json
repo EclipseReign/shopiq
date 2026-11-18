@@ -1,22 +1,15 @@
 {
-    "name": "kaspi-backend",
-    "version": "1.0.0",
-    "description": "Backend API для Kaspi скрейпинга и панели управления",
-    "main": "server.js",
-    "scripts": {
-        "start": "node server.js",
-        "dev": "nodemon server.js",
-        "scrape": "node scraping/scraper.js"
-    },
-    "dependencies": {
-        "body-parser": "^1.20.3",
-        "cors": "^2.8.5",
-        "dotenv": "^16.5.0",
-        "express": "^4.21.2",
-        "pg": "^8.14.1",
-        "sqlite3": "^5.1.2"
-    },
-    "devDependencies": {
-        "nodemon": "^2.0.15"
-    }
+  "name": "shopiq-backend",
+  "scripts": {
+    "scrape": "node scraper/http-scraper.mjs",
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "version": "3.0.0",
+  "private": true,
+  "dependencies": {
+    "dotenv": "16.6.1",
+    "pg": "8.23.1",
+    "express": "5.3.0"
+  }
 }

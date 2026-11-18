@@ -1,0 +1,100 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "shopiq",
+  "account_id": "28ef50ccf16d476a499cf06b17810a9c",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-18",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/feeds/*"
+    ]
+  },
+  "vars": {
+    "SUPABASE_URL": "https://bmyormnkqppkelngpkok.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_kI52DiDbSGcMNmHf-DF0pA_7T-SPe_6",
+    "ADMIN_EMAIL": "saint.john.bobby@gmail.com"
+  },
+  "secrets": {
+    "required": [
+      "SUPABASE_SERVICE_ROLE_KEY"
+    ]
+  },
+  "ratelimits": [
+    {
+      "name": "API_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    },
+    {
+      "name": "EXPENSIVE_LIMITER",
+      "namespace_id": "1002",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "JOBS",
+        "queue": "shopiq-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "shopiq-jobs",
+        "max_batch_size": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "shopiq-dead-letters",
+        "max_concurrency": 2
+      }
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "17 * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  },
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "KASPI_SOURCE",
+        "class_name": "KaspiSource"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "KaspiSource"
+      ]
+    }
+  ]
+}

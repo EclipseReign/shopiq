@@ -1,49 +1,100 @@
-// models/db.js
-const { Pool } = require('pg');
+const path = require("node:path");
+const { promisify } = require("node:util");
+const execFile = promisify(require("node:child_process").execFile);
+const root = path.resolve(__dirname, "../..");
+let database;
+let postgres;
+let transactionQueue = Promise.resolve();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-pool.query('CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);');
-pool.query('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);');
-pool.query(`
-  CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
-    category TEXT,
-    name TEXT,
-    price TEXT,
-    parsed_price NUMERIC,
-    brand TEXT,
-    rating NUMERIC,
-    reviews_count INT,
-    installment_price TEXT,
-    computed_revenue NUMERIC,
-    image_url TEXT,
-    scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+async function initialize() {
+  await execFile(
+    process.env.PYTHON_BIN || "python",
+    [path.join(root, "backend/scraper/storage.py")],
+    {
+      cwd: root,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      timeout: 120_000,
+    },
   );
-`, (err, res) => {
-  if (err) {
-    console.error('Error creating products table:', err);
+  postgres = Boolean(process.env.DATABASE_URL);
+  if (postgres) {
+    const { Pool, types } = require("pg");
+    // Scraper timestamps are stored in UTC. Keep naive PG timestamps as text
+    // so the host timezone cannot shift dates before the API serializes them.
+    types.setTypeParser(1114, (value) => value);
+    const maxConnections = Number(process.env.PG_POOL_MAX || 5);
+    if (!Number.isSafeInteger(maxConnections) || maxConnections < 1)
+      throw new Error("PG_POOL_MAX должен быть положительным целым числом");
+    database = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: maxConnections,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 30_000,
+      statement_timeout: 15_000,
+    });
+    database.on("error", (error) =>
+      console.error("Database connection error", error.message),
+    );
   } else {
-    console.log("Products table ready");
+    const { DatabaseSync } = require("node:sqlite");
+    database = new DatabaseSync(
+      path.resolve(
+        root,
+        process.env.SHOPIQ_DB_PATH || "backend/data/shopiq.sqlite",
+      ),
+    );
+    database.function("lower", { deterministic: true }, (value) =>
+      value == null ? null : String(value).toLowerCase(),
+    );
+    database.exec(
+      "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;",
+    );
   }
-});
+}
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS categories (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    url TEXT,
-    parent_id INTEGER REFERENCES categories(id),
-    level INTEGER NOT NULL
-  );
-`, (err, res) => {
-  if (err) {
-    console.error('Error creating categories table:', err);
-  } else {
-    console.log("Categories table ready");
-  }
-});
+async function rawQuery(sql, values = []) {
+  if (postgres) return database.query(sql, values);
+  // Reorder repeated PostgreSQL parameters for SQLite's positional bindings.
+  const bindings = [];
+  const sqliteSql = sql.replace(/\$(\d+)/g, (_, index) => {
+    bindings.push(values[Number(index) - 1]);
+    return "?";
+  });
+  const statement = database.prepare(sqliteSql);
+  if (statement.columns().length) return { rows: statement.all(...bindings) };
+  return { rows: [], rowCount: Number(statement.run(...bindings).changes) };
+}
 
-module.exports = pool;
+function query(sql, values = []) {
+  if (postgres) return rawQuery(sql, values);
+  return transactionQueue.then(() => rawQuery(sql, values));
+}
+
+async function close() {
+  await transactionQueue.catch(() => {});
+  if (!database) return;
+  if (postgres) await database.end();
+  else database.close();
+  database = null;
+}
+
+function transaction(callback) {
+  const operation = async () => {
+    const client = postgres ? await database.connect() : null;
+    const connection = client || { query: rawQuery };
+    try {
+      await connection.query(postgres ? 'BEGIN' : 'BEGIN IMMEDIATE');
+      const result = await callback(connection);
+      await connection.query('COMMIT');
+      return result;
+    } catch (error) {
+      await connection.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client?.release(); }
+  };
+  const result = transactionQueue.then(operation, operation);
+  transactionQueue = result.catch(() => {});
+  return result;
+}
+
+module.exports = { initialize, query, transaction, close };
